@@ -1,0 +1,18 @@
+stages:
+  - deploy
+
+deploy:
+  stage: deploy
+  image: debian:bookworm-slim
+  only:
+    - main
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq openssh-client rsync > /dev/null 2>&1
+    - mkdir -p ~/.ssh
+    - cp "$DREAMHOST_SSH_KEY" ~/.ssh/id_rsa
+    - echo "" >> ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - ssh-keyscan -H "$DREAMHOST_HOST" >> ~/.ssh/known_hosts
+  script:
+    - cp PumaClicker.html index.html
+    - rsync -avz --delete --exclude='.git' --exclude='.claude' --exclude='.gitlab-ci.yml' ./ ${DREAMHOST_USERNAME}@${DREAMHOST_HOST}:/home/${DREAMHOST_USERNAME}/greykit.com/games/pumaclicker/
