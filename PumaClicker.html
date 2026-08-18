@@ -1818,7 +1818,7 @@ function spawnFloatingNumber(cx, cy, value) {
 }
 
 // ── Confetti burst (for milestones / happiness max) ───────────────────────────
-const CONFETTI_EMOTES = ['✨', '🌟', '⭐', '💫', '🎉', '🐆', '💛', '🎊'];
+const CONFETTI_EMOTES = ['✨', '🌟', '⭐', '💫', '🎉', '🐾', '💛', '🎊'];
 
 function spawnConfetti(cx, cy, count) {
   for (let i = 0; i < count; i++) {
@@ -2203,7 +2203,7 @@ function spawnGoldenSprite() {
   const b = document.createElement('button');
   b.id = 'golden-sprite';
   b.setAttribute('aria-label', 'A golden puma appeared! Catch it for 3× income');
-  b.textContent = '🐆';
+  b.textContent = '🐾';
   b.style.left = (15 + Math.random() * 70) + 'vw';
   b.style.top  = (18 + Math.random() * 60) + 'vh';
   b.addEventListener('click', () => {
@@ -2420,7 +2420,7 @@ if (window.matchMedia('(hover: none) and (pointer: coarse)').matches) {
 })();
 
 // ── Console easter egg — reward the curious ───────────────────────────────────
-console.log(`%c🐆  PumaClicker`, `font-size:28px;color:${CONSOLE_COLORS.brand};font-family:monospace;font-weight:bold;`);
+console.log(`%c🐾  PumaClicker`, `font-size:28px;color:${CONSOLE_COLORS.brand};font-family:monospace;font-weight:bold;`);
 console.log(`%cHey, curious one. The puma sees you. 👀`, `font-size:13px;color:${CONSOLE_COLORS.mid};`);
 console.log(`%cType puma.help() to see what the puma knows.`, `font-size:11px;color:${CONSOLE_COLORS.ghost};`);
 
@@ -2637,7 +2637,7 @@ if (!localStorage.getItem(OB_WELCOME_KEY)) {
   card.setAttribute('aria-label', 'How to play PumaClicker');
   card.innerHTML = `
     <div class="ob-header">
-      🐆 How to play
+      🐾 How to play
       <button class="ob-close" aria-label="Dismiss tips">×</button>
     </div>
     <div class="ob-tip">
@@ -2701,7 +2701,7 @@ window.puma = Object.freeze({
     const b = `color:${CONSOLE_COLORS.brand};font-weight:bold`;
     const m = `color:${CONSOLE_COLORS.mid}`;
     const g = `color:${CONSOLE_COLORS.ghost}`;
-    console.group('%c🐆 puma cheat sheet', b);
+    console.group('%c🐾 puma cheat sheet', b);
     console.log('%cpuma.give(n)%c      — add n pets (default 1000)', b, m);
     console.log('%cpuma.golden()%c     — trigger a golden event right now', b, m);
     console.log('%cpuma.happy()%c      — set happiness to 100', b, m);
@@ -2762,7 +2762,7 @@ window.puma = Object.freeze({
   stats() {
     const b = `color:${CONSOLE_COLORS.brand};font-weight:bold`;
     const m = `color:${CONSOLE_COLORS.mid}`;
-    console.group('%c🐆 PumaClicker — Game State', b);
+    console.group('%c🐾 PumaClicker — Game State', b);
     console.log(`%cpets:          %c${fmt(state.pets)}`, b, m);
     console.log(`%ctotalPets:     %c${fmt(state.totalPets)}`, b, m);
     console.log(`%cppc (base):    %c${fmt(state.ppc)}`, b, m);
