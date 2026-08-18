@@ -7,6 +7,8 @@
 <title>PumaClicker</title>
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0a0602">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Space+Grotesk:wght@500;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
@@ -104,7 +106,8 @@ body {
   flex-direction: column;
   align-items: center;
   padding: 20px 16px 16px;
-  overflow: hidden;
+  overflow-y: auto;   /* fallback scroll when content outgrows short viewports */
+  overflow-x: hidden;
 }
 
 h1 {
@@ -156,7 +159,11 @@ h1 {
 /* Puma wrapper — animation uses opacity-only pseudo-element (compositor-safe) */
 #puma-wrapper {
   flex: 1;
-  min-height: 0;
+  /* Floor + size containment: the wrapper is a query container so #puma-art can
+     scale itself to the space left over after the transcend zone appears,
+     instead of overflowing the frame (art spilled over the title before). */
+  min-height: 150px;
+  container-type: size;
   background: var(--bg-card);
   border: 2px solid color-mix(in srgb, var(--amber) 40%, transparent);
   border-radius: 20px;
@@ -220,7 +227,10 @@ h1 {
 }
 
 #puma-art {
-  font-size: 1.12em;
+  /* Auto-fit: the art is 7 lines × 1.42 line-height ≈ 10em tall, plus the
+     click-hint + gap (~31px). Scale font-size to the wrapper's height (cqh)
+     so the puma always fits its frame; capped at full size on tall viewports. */
+  font-size: clamp(6px, calc(10cqh - 3px), 1.12em);
   line-height: 1.42;
   color: var(--amber);
   text-align: center;
@@ -386,6 +396,32 @@ h1 {
 #new-game-btn:hover   { opacity: 1; }
 #new-game-btn.confirm { color: var(--coral); opacity: 1; }
 
+/* Save export / import — quiet footer links beside "new game" */
+#save-row {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 2px;
+}
+
+.footer-link {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-family: var(--font-body);
+  font-size: 0.62em;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  opacity: 0.5;
+  padding: 3px 6px;
+  border-radius: 6px;
+  transition: opacity 0.2s var(--ease-out-quart), color 0.2s var(--ease-out-quart);
+}
+
+.footer-link:hover { opacity: 1; }
+
 /* ── Right column (shop) ── */
 #side-panel {
   display: flex;
@@ -418,6 +454,38 @@ h1 {
   margin-bottom: 12px;
   padding-bottom: 8px;
   border-bottom: 1px solid color-mix(in srgb, var(--amber) 18%, transparent);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Buy amount toggle (×1 / ×10 / Max) in the shop title */
+.buy-toggle { display: flex; gap: 4px; }
+
+.buy-mode {
+  background: var(--bg);
+  border: 1px solid color-mix(in srgb, var(--amber) 30%, transparent);
+  color: var(--text-mid);
+  font-family: var(--font-body);
+  font-size: 0.72em;
+  font-weight: 700;
+  border-radius: 8px;
+  padding: 3px 8px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.buy-mode:hover  { border-color: var(--amber); color: var(--amber); }
+.buy-mode.active { background: var(--amber); color: var(--dark-text); border-color: var(--amber); }
+
+/* Achievement income bonus in the panel title */
+.ach-bonus {
+  font-family: var(--font-body);
+  color: var(--sage);
+  font-size: 0.82em;
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
 /* Upgrade buttons */
@@ -484,6 +552,13 @@ h1 {
 }
 
 .upg-need.close { color: var(--amber-warm); }
+
+/* Undiscovered upgrade teaser (???) */
+.upg-btn.teaser { opacity: 0.5; border-style: dashed; }
+.upg-btn.teaser .upg-name { color: var(--text-muted); letter-spacing: 0.14em; }
+
+/* Bulk count in cost label ("1.2K ×10") */
+.upg-bulk { color: var(--text-mid); font-size: 0.85em; }
 
 /* Achievements */
 .ach-item {
@@ -717,8 +792,33 @@ h1 {
   animation: goldenPulse 1.2s ease-in-out infinite;
 }
 
+/* Catchable golden puma sprite */
+#golden-sprite {
+  position: fixed;
+  z-index: 9500;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 2.6em;
+  line-height: 1;
+  padding: 8px;
+  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--amber) 80%, transparent));
+  animation: goldenFloat 1.6s ease-in-out infinite;
+  transition: opacity 0.4s;
+}
+
+#golden-sprite:hover,
+#golden-sprite:focus-visible {
+  filter: drop-shadow(0 0 18px var(--amber));
+}
+
+@keyframes goldenFloat {
+  0%, 100% { transform: translateY(0)     rotate(-8deg); }
+  50%       { transform: translateY(-12px) rotate(8deg); }
+}
+
 /* ── Feature B — Stats panel ── */
-#stats-panel { flex: 1; min-height: unset; }
+#stats-panel { flex: 0 0 auto; min-height: unset; }
 #stats-panel .stats-toggle-btn {
   width: 100%;
   background: none;
@@ -754,7 +854,7 @@ h1 {
 .stat-val { color: var(--amber); font-weight: 600; font-variant-numeric: tabular-nums; }
 
 /* ── Feature C — Synergy panel ── */
-#synergy-panel { flex: 1; min-height: unset; }
+#synergy-panel { flex: 0 0 auto; min-height: unset; }
 .syn-item {
   display: flex;
   align-items: flex-start;
@@ -771,6 +871,11 @@ h1 {
   from { opacity: 0; transform: translateX(-6px); }
   to   { opacity: 1; transform: translateX(0); }
 }
+
+/* Locked synergy rows — ??? with requirement hints */
+.syn-item.locked { opacity: 0.4; animation: none; }
+.syn-item.locked .syn-name   { color: var(--text-muted); letter-spacing: 0.1em; }
+.syn-item.locked .syn-effect { color: var(--text-desc); }
 
 /* ── Shop upgrade glows when it first becomes affordable ── */
 @keyframes becameAffordable {
@@ -796,7 +901,18 @@ h1 {
   .ach-item.just-earned, .stat-item .val.stat-bumping { animation: none; transform: none; }
   #golden-banner, #golden-banner.dismissing { animation: none; transform: translateX(-50%); opacity: 1; }
   #puma-wrapper.golden-puma #puma-art { animation: none; filter: brightness(1.4); }
+  #golden-sprite { animation: none; }
   .syn-item { animation: none; }
+}
+
+/* ── Short desktop viewports: compact the center column so the puma keeps
+      room even when the transcend zone is visible ── */
+@media (min-width: 541px) and (max-height: 820px) {
+  #pet-count     { font-size: 3.6em; }
+  #stats         { padding: 10px 14px; }
+  .stat-row      { margin-top: 8px; padding-top: 6px; }
+  #happiness-box { padding: 8px 14px; }
+  #puma-wrapper  { padding: 12px 16px 16px; }
 }
 
 /* ── Responsive: two-column on medium viewports (tablet) ── */
@@ -817,6 +933,10 @@ h1 {
   }
   #main-panel  { grid-column: 1; grid-row: 1; }
   #side-panel  { grid-column: 2; grid-row: 1; }
+  /* Scrolling layout: no need to auto-fit the art (and cqh resolves to 0 in
+     auto-height columns) — let content size the wrapper like it used to */
+  #puma-wrapper { flex: none; min-height: 260px; container-type: normal; }
+  #puma-art     { font-size: 1.12em; }
   #left-panel {
     grid-column: 1 / -1;
     grid-row: 2;
@@ -858,11 +978,14 @@ h1 {
   #puma-wrapper {
     flex: none;
     min-height: 200px;
+    container-type: normal; /* scrolling layout — content sizes the box */
   }
+  #puma-art { font-size: 1.12em; }
 
   /* Ensure WCAG 2.5.5 minimum 44×44px touch targets on mobile (base min-height: 90px preserved) */
   .upg-btn       { padding: 10px 12px; font-size: 0.8em; }
   #transcend-btn { min-height: 50px; font-size: 1em; }
+  .buy-mode      { padding: 8px 12px; }
 
   /* Allow toast to wrap on narrow screens instead of overflowing off-edge */
   #toast {
@@ -894,7 +1017,8 @@ h1 {
     flex: none;
   }
 
-  #puma-wrapper { min-height: 150px; padding: 10px 16px 12px; flex: none; }
+  #puma-wrapper { min-height: 150px; padding: 10px 16px 12px; flex: none; container-type: normal; }
+  #puma-art     { font-size: 1.12em; }
   #pet-count    { font-size: 2.8em; }
   #stats        { padding: 8px 14px; }
   .stat-row     { margin-top: 8px; padding-top: 7px; }
@@ -1195,7 +1319,7 @@ h1            { animation: pageEnter      0.55s var(--ease-out-quart)  0ms  both
 <body>
 
 <header id="page-header">
-  <h1>&#x1F406; PumaClicker</h1>
+  <h1>PumaClicker</h1>
   <p class="subtitle">click the puma. pet the puma. be the puma.</p>
   <button id="about-btn" onclick="openAbout()" title="About" aria-label="About PumaClicker">?</button>
 </header>
@@ -1273,6 +1397,10 @@ h1            { animation: pageEnter      0.55s var(--ease-out-quart)  0ms  both
 
     <div id="total-row">total pets ever: <span id="total-val">0</span></div>
     <button id="new-game-btn" aria-label="Start a new game (requires confirmation)">new game</button>
+    <div id="save-row">
+      <button id="export-btn" class="footer-link" aria-label="Copy save code to clipboard">export save</button>
+      <button id="import-btn" class="footer-link" aria-label="Paste a save code to restore">import save</button>
+    </div>
 
   </div>
 
@@ -1291,7 +1419,7 @@ h1            { animation: pageEnter      0.55s var(--ease-out-quart)  0ms  both
 <div id="about-overlay" onclick="closeAbout()" role="dialog" aria-modal="true" aria-labelledby="about-title">
   <div id="about-window" onclick="event.stopPropagation()">
     <div id="about-header">
-      <span id="about-title">&#x1F406; About PumaClicker</span>
+      <span id="about-title">About PumaClicker</span>
       <button id="about-close" onclick="closeAbout()">&#x2715; CLOSE</button>
     </div>
     <div id="about-body">
@@ -1343,6 +1471,7 @@ const state = {
   // Feature A — Golden Puma Events
   goldenActive: false,
   goldenEndsAt: 0,  // absolute performance.now() ms timestamp
+  goldensCaught: 0, // golden pumas clicked (Gold Rush achievement)
   // Feature B — Statistics (survive transcendence)
   totalClicks: 0,
   timePlayed:  0,   // seconds with tab open
@@ -1350,30 +1479,89 @@ const state = {
 };
 
 // ── Upgrades ──────────────────────────────────────────────────────────────────
+// Declarative effects (ppc / pps / clickPps) instead of mutation fns: income is
+// recomputed from owned counts on load, so balance changes apply retroactively
+// to old saves. Cost growth is 1.3–1.6 per copy (was 2.0) so buying quantities
+// of older tiers stays a real strategy.
+// clickPps: each copy adds that fraction of your pets/sec to every click —
+// keeps active clicking relevant deep into the game.
 const UPGRADES = [
-  { id: 'treat',     name: 'Treat Bag',          baseCost: 10,          mult: 1.5, desc: '+1 pet / click',          fn: () => { state.ppc += 1; } },
-  { id: 'brush',     name: 'Grooming Brush',      baseCost: 50,          mult: 1.5, desc: '+2 pets / click',         fn: () => { state.ppc += 2; } },
-  { id: 'catnip',    name: 'Catnip Stash',        baseCost: 100,         mult: 2.0, desc: '+1 pet / sec',            fn: () => { state.pps += 1; } },
-  { id: 'belly',     name: 'Belly Rub Technique', baseCost: 400,         mult: 1.7, desc: '+5 pets / click',         fn: () => { state.ppc += 5; } },
-  { id: 'machine',   name: 'Petting Machine',     baseCost: 1000,        mult: 2.0, desc: '+5 pets / sec',           fn: () => { state.pps += 5; } },
-  { id: 'whisperer', name: 'Puma Whisperer',      baseCost: 4000,        mult: 1.8, desc: '+20 pets / click',        fn: () => { state.ppc += 20; } },
-  { id: 'sanctuary', name: 'Puma Sanctuary',      baseCost: 10000,       mult: 2.0, desc: '+50 pets / sec',          fn: () => { state.pps += 50; } },
-  { id: 'army',      name: 'Clone Puma Army',     baseCost: 100000,      mult: 2.0, desc: '+500 pets / sec',         fn: () => { state.pps += 500; } },
-  { id: 'dimension', name: 'Puma Dimension',      baseCost: 500000,      mult: 2.0, desc: '+2,000 pets / sec',       fn: () => { state.pps += 2000; } },
-  { id: 'timepuma',  name: 'Time Puma',           baseCost: 5000000,     mult: 2.0, desc: '+20,000 pets / sec',      fn: () => { state.pps += 20000; } },
-  { id: 'quantum',   name: 'Quantum Purr',        baseCost: 50000000,    mult: 1.9, desc: '+1,000 pets / click',     fn: () => { state.ppc += 1000; } },
-  { id: 'cosmic',    name: 'Cosmic Puma',         baseCost: 500000000,   mult: 2.0, desc: '+1,000,000 pets / sec',   fn: () => { state.pps += 1000000; } },
-  { id: 'godmode',   name: 'Puma God Mode',       baseCost: 10000000000, mult: 2.0, desc: '+10,000,000 pets / sec',  fn: () => { state.pps += 10000000; } },
+  { id: 'treat',     name: 'Treat Bag',           baseCost: 10,          mult: 1.35, ppc: 1,        desc: '+1 pet / click' },
+  { id: 'brush',     name: 'Grooming Brush',      baseCost: 60,          mult: 1.4,  ppc: 3,        desc: '+3 pets / click' },
+  { id: 'catnip',    name: 'Catnip Stash',        baseCost: 100,         mult: 1.3,  pps: 1,        desc: '+1 pet / sec' },
+  { id: 'belly',     name: 'Belly Rub Technique', baseCost: 500,         mult: 1.45, ppc: 8,        desc: '+8 pets / click' },
+  { id: 'machine',   name: 'Petting Machine',     baseCost: 1200,        mult: 1.35, pps: 6,        desc: '+6 pets / sec' },
+  { id: 'whisperer', name: 'Puma Whisperer',      baseCost: 5000,        mult: 1.5,  ppc: 25,       desc: '+25 pets / click' },
+  { id: 'sanctuary', name: 'Puma Sanctuary',      baseCost: 12000,       mult: 1.35, pps: 45,       desc: '+45 pets / sec' },
+  { id: 'army',      name: 'Clone Puma Army',     baseCost: 120000,      mult: 1.4,  pps: 400,      desc: '+400 pets / sec' },
+  { id: 'dimension', name: 'Puma Dimension',      baseCost: 600000,      mult: 1.4,  pps: 2500,     desc: '+2,500 pets / sec' },
+  { id: 'timepuma',  name: 'Time Puma',           baseCost: 6000000,     mult: 1.4,  pps: 22000,    desc: '+22,000 pets / sec' },
+  { id: 'quantum',   name: 'Quantum Purr',        baseCost: 30000000,    mult: 1.6,  clickPps: 0.02, desc: 'clicks gain +2% of pets/sec each' },
+  { id: 'nebula',    name: 'Nebula Petting Grid', baseCost: 80000000,    mult: 1.45, pps: 150000,   desc: '+150,000 pets / sec' },
+  { id: 'cosmic',    name: 'Cosmic Puma',         baseCost: 900000000,   mult: 1.45, pps: 1200000,  desc: '+1.2M pets / sec' },
+  { id: 'godmode',   name: 'Puma God Mode',       baseCost: 15000000000, mult: 1.5,  pps: 12000000, desc: '+12M pets / sec' },
 ];
 
 function upgradeCost(u) {
   return Math.floor(u.baseCost * Math.pow(u.mult, state.owned[u.id] || 0));
 }
 
+// Derive base ppc/pps from owned counts — the single source of truth.
+function recomputeIncome() {
+  state.ppc = 1;
+  state.pps = 0;
+  UPGRADES.forEach((u) => {
+    const n = state.owned[u.id] || 0;
+    if (!n) return;
+    if (u.ppc) state.ppc += u.ppc * n;
+    if (u.pps) state.pps += u.pps * n;
+  });
+}
+
+// Base pps with synergy effects applied (before income/happiness multipliers)
+function effectiveBasePps() {
+  const machineBonus = unlockedSynergies.has('machine_whisperer') ? (state.owned.machine || 0) * 3 : 0;
+  const boost = unlockedSynergies.has('sanctuary_dimension') ? 1.25 : 1.0;
+  return (state.pps + machineBonus) * boost;
+}
+
+// Quantum Purr: each copy adds 2% of effective pps to every click
+function clickPpsBonus() {
+  const q = state.owned.quantum || 0;
+  return q ? q * 0.02 * effectiveBasePps() : 0;
+}
+
+// ── Buy amount (×1 / ×10 / Max) ───────────────────────────────────────────────
+let buyMode = localStorage.getItem('pc-buymode');
+if (!['1', '10', 'max'].includes(buyMode)) buyMode = '1';
+
+// How many copies the current buy mode purchases, and their total cost.
+// 'max' returns the single-copy price when nothing is affordable (n stays 1
+// for display; the button will be disabled).
+function bulkPlan(u, mode) {
+  const ownedN = state.owned[u.id] || 0;
+  let c = u.baseCost * Math.pow(u.mult, ownedN);
+  if (mode === '1') return { n: 1, cost: Math.floor(c) };
+  if (mode === '10') {
+    let total = 0;
+    for (let i = 0; i < 10; i++) { total += c; c *= u.mult; }
+    return { n: 10, cost: Math.floor(total) };
+  }
+  let n = 0, total = 0;
+  while (total + c <= state.pets && n < 500) { total += c; c *= u.mult; n++; }
+  if (n === 0) return { n: 1, cost: Math.floor(u.baseCost * Math.pow(u.mult, ownedN)) };
+  return { n, cost: Math.floor(total) };
+}
+
 // ── Transcendence ──────────────────────────────────────────────────────────────
+// 2.5× per transcend (was 1.5×) against an ×8 threshold (was ×10): later
+// cycles stay worthwhile instead of going underwater.
+const TRANSCEND_REWARD = 2.5;
+
 function incomeMultiplier() {
-  const base = state.transcendences > 0 ? Math.pow(1.5, state.transcendences) : 1;
-  return base * (state.goldenActive ? 3 : 1);
+  const base = state.transcendences > 0 ? Math.pow(TRANSCEND_REWARD, state.transcendences) : 1;
+  const ach  = 1 + 0.01 * earned.size; // +1% permanent income per achievement
+  return base * ach * (state.goldenActive ? 3 : 1);
 }
 
 // Happiness scales passive income: h=0 → 0.5×, h=50 → 1.0× (baseline), h=100 → 1.5×
@@ -1383,12 +1571,12 @@ function happinessMultiplier() {
 }
 
 function transcendThreshold() {
-  // Each transcendence requires 10× more total pets.
-  // Beyond t=14 the result exceeds Number.MAX_SAFE_INTEGER (9.007e15), so we
-  // clamp to a fixed astronomically large value so comparisons stay reliable.
+  // Each transcendence requires 8× more total pets.
+  // 1e6×8^11 ≈ 8.6e15 is the last step below Number.MAX_SAFE_INTEGER, so we
+  // clamp beyond that to a fixed astronomically large value.
   const t = state.transcendences;
-  if (t >= 15) return 1e18; // effectively unreachable — safely representable
-  return 1000000 * Math.pow(10, t); // safe for t 0–14
+  if (t >= 12) return 1e18; // effectively unreachable — safely representable
+  return 1000000 * Math.pow(8, t); // safe for t 0–11
 }
 
 function doTranscend() {
@@ -1400,10 +1588,9 @@ function doTranscend() {
 
   state.transcendences += 1;
   state.pets      = 0;
-  state.ppc       = 1;
-  state.pps       = 0;
   state.owned     = {};
   state.happiness = 50;
+  recomputeIncome();
   buildShop();
   buildAchievements();
   updateUI();
@@ -1438,6 +1625,12 @@ const ACHIEVEMENTS = [
   { id: 'transcend1', icon: '&#x2B50;',  name: 'Transcendence',     desc: 'Transcend for the first time.',       check: () => state.transcendences >= 1 },
   { id: 'transcend3', icon: '&#x1F300;', name: 'Triple Ascended',   desc: 'Transcend 3 times.',                  check: () => state.transcendences >= 3 },
   { id: 'shop50',     icon: '&#x1F9E7;', name: 'Upgrade Hoarder',   desc: 'Buy 50 upgrades total.',              check: () => totalOwned() >= 50 },
+  { id: 'c10b',       icon: '&#x1F320;', name: 'Puma Multiverse',   desc: '10,000,000,000 total pets.',          check: () => state.totalPets >= 1e10 },
+  { id: 'c100b',      icon: '&#x1F386;', name: 'Puma Omniverse',    desc: '100,000,000,000 total pets.',         check: () => state.totalPets >= 1e11 },
+  { id: 'transcend5', icon: '&#x1F52E;', name: 'Eternal Puma',      desc: 'Transcend 5 times.',                  check: () => state.transcendences >= 5 },
+  { id: 'own10',      icon: '&#x1F4E6;', name: 'Bulk Buyer',        desc: 'Own 10 copies of one upgrade.',       check: () => Object.values(state.owned).some(n => n >= 10) },
+  { id: 'golden1',    icon: '&#x1F31F;', name: 'Gold Rush',         desc: 'Catch a golden puma.',                check: () => (state.goldensCaught || 0) >= 1 },
+  { id: 'grump',      icon: '&#x1F4A2;', name: 'Sorry, Puma',       desc: 'Drive happiness to zero.',            check: () => state.happiness <= 0 },
 ];
 
 const earned = new Set();
@@ -1648,12 +1841,25 @@ function spawnConfetti(cx, cy, count) {
 }
 
 // ── Click / Keyboard ──────────────────────────────────────────────────────────
+// Over-petting: happiness gain depends on click rate over the last 2 s.
+// ≤3 clicks/s → +9 · 3.5–5/s → +2 (soft cap) · >5/s → −7 (puma gets annoyed).
+// This is what makes the Grumpy mood, angry art, and the hap-hint reachable —
+// spam-clicking trades passive-income multiplier for raw click income.
+const _clickTimes = [];
+function clickHappinessDelta() {
+  const nowMs = performance.now();
+  _clickTimes.push(nowMs);
+  while (_clickTimes.length && nowMs - _clickTimes[0] > 2000) _clickTimes.shift();
+  const recent = _clickTimes.length; // clicks in the last 2 s
+  return recent <= 6 ? 9 : recent <= 10 ? 2 : -7;
+}
+
 function petPuma(cx, cy) {
   state.totalClicks += 1;
-  const gain = state.ppc * incomeMultiplier();
+  const gain = (state.ppc + clickPpsBonus()) * incomeMultiplier();
   state.pets      += gain;
   state.totalPets += gain;
-  state.happiness  = Math.min(100, state.happiness + 9);
+  state.happiness  = Math.max(0, Math.min(100, state.happiness + clickHappinessDelta()));
 
   pumaWrapper.classList.add('petting');
   setTimeout(() => pumaWrapper.classList.remove('petting'), 140);
@@ -1693,107 +1899,123 @@ document.addEventListener('keydown', (e) => {
 });
 
 // ── Shop ──────────────────────────────────────────────────────────────────────
-function buildShop() {
-  shopEl.innerHTML = '<div class="panel-title">&#x1F6D2; Shop</div>';
-  UPGRADES.forEach((u) => {
-    const cost  = upgradeCost(u);
-    const owned = state.owned[u.id] || 0;
-    const btn   = document.createElement('button');
-    btn.className = 'upg-btn';
-    btn.disabled  = state.pets < cost;
-    const canAfford = state.pets >= cost;
-    const progress  = canAfford ? 100 : Math.min(99, Math.floor((state.pets / cost) * 100));
-    const closeClass = (!canAfford && progress >= 60) ? ' close' : '';
-    const needMore  = canAfford ? '' : `<span class="upg-need${closeClass}">need ${fmt(cost - Math.floor(state.pets))} more</span>`;
-    btn.innerHTML = `
-      <div class="upg-top">
-        <span class="upg-name">${u.name}</span>
-        <span class="upg-cost">${fmt(cost)} &#x1F43E;</span>
-      </div>
-      <span class="upg-desc${u.desc.includes('sec') ? ' passive' : ''}">${u.desc}${owned > 0 ? ` &nbsp;<span class="upg-owned">[${owned} owned]</span>` : ''}</span>
-      ${!canAfford && progress > 0 ? `<div class="upg-progress-track"><div class="upg-progress-fill${closeClass}" style="width:${progress}%"></div></div>` : ''}
-      ${needMore}
-    `;
-    btn.addEventListener('click', () => {
-      const c = upgradeCost(u);
-      if (state.pets < c) return;
-      state.pets = Math.max(0, state.pets - c); // float subtraction guard
-      state.owned[u.id] = (state.owned[u.id] || 0) + 1;
-      u.fn();
-      updateShopInPlace(); // mutate existing buttons — no DOM rebuild, no position drift
-      updateUI();
-      checkAchievements();
-      saveGame();
-      showToast('Bought: ' + u.name + '!');
-    });
-    shopEl.appendChild(btn);
+function setBuyMode(m) {
+  buyMode = m;
+  try { localStorage.setItem('pc-buymode', m); } catch (e) { /* private mode — fine */ }
+  shopEl.querySelectorAll('.buy-mode').forEach((b) => {
+    const on = b.dataset.mode === m;
+    b.classList.toggle('active', on);
+    b.setAttribute('aria-pressed', on);
   });
+  updateShopInPlace();
 }
 
-// Update shop button content in-place after a purchase.
+function buyUpgrade(u) {
+  const plan = bulkPlan(u, buyMode);
+  if (state.pets < plan.cost) return;
+  state.pets = Math.max(0, state.pets - plan.cost); // float subtraction guard
+  state.owned[u.id] = (state.owned[u.id] || 0) + plan.n;
+  recomputeIncome();
+  updateShopInPlace(); // mutate existing buttons — no DOM rebuild, no position drift
+  updateUI();
+  checkAchievements();
+  saveGame();
+  showToast('Bought: ' + u.name + (plan.n > 1 ? ' &times;' + plan.n : '') + '!');
+}
+
+// Builds the shop skeleton (title + buy-mode toggle + one button per upgrade);
+// updateShopInPlace() fills in all button content.
+function buildShop() {
+  shopEl.innerHTML = '<div class="panel-title shop-title">&#x1F6D2; Shop' +
+    '<span class="buy-toggle" role="group" aria-label="Buy amount">' +
+    ['1', '10', 'max'].map((m) =>
+      `<button class="buy-mode${buyMode === m ? ' active' : ''}" data-mode="${m}" aria-pressed="${buyMode === m}">${m === 'max' ? 'Max' : '&times;' + m}</button>`
+    ).join('') +
+    '</span></div>';
+  shopEl.querySelectorAll('.buy-mode').forEach((b) => {
+    b.addEventListener('click', () => setBuyMode(b.dataset.mode));
+  });
+  UPGRADES.forEach((u) => {
+    const btn = document.createElement('button');
+    btn.className = 'upg-btn';
+    btn.addEventListener('click', () => buyUpgrade(u));
+    shopEl.appendChild(btn);
+  });
+  updateShopInPlace();
+}
+
+// Update shop button content in-place — runs every UI tick and after purchases,
+// so progress bars and "need X more" labels track passive income live.
 // Mutates existing <button> elements rather than destroying and recreating them,
 // so button Y-positions never shift mid-interaction (no drift for rapid clicks).
+// Dirty-checked per button on the *rendered* strings: idle frames write nothing.
+//
+// Reveal rule: the 3 starter upgrades are always visible; anything else shows
+// once owned or once lifetime pets reach half its base cost. The first
+// undiscovered upgrade renders as a "???" teaser; everything past it is hidden.
 function updateShopInPlace() {
   const btns = shopEl.querySelectorAll('.upg-btn');
   if (btns.length !== UPGRADES.length) { buildShop(); return; } // safety: full rebuild if DOM is stale
+  let teaserShown = false;
   UPGRADES.forEach((u, i) => {
-    const btn        = btns[i];
-    const cost       = upgradeCost(u);
-    const owned      = state.owned[u.id] || 0;
-    const canAfford  = state.pets >= cost;
-    const progress   = canAfford ? 100 : Math.min(99, Math.floor((state.pets / cost) * 100));
-    const closeClass = (!canAfford && progress >= 60) ? ' close' : '';
+    const btn      = btns[i];
+    const revealed = i < 3 || (state.owned[u.id] || 0) > 0 || state.totalPets >= u.baseCost / 2;
 
-    btn.disabled = !canAfford;
-
-    // Cost label
-    btn.querySelector('.upg-cost').innerHTML = fmt(cost) + ' &#x1F43E;';
-
-    // Description + owned badge (preserve passive class)
-    const descEl = btn.querySelector('.upg-desc');
-    descEl.innerHTML = u.desc + (owned > 0 ? ` &nbsp;<span class="upg-owned">[${owned} owned]</span>` : '');
-
-    // Progress bar — add if missing, remove if no longer needed
-    let track = btn.querySelector('.upg-progress-track');
-    if (!canAfford && progress > 0) {
-      if (!track) {
-        track = document.createElement('div');
-        track.className = 'upg-progress-track';
-        btn.appendChild(track);
+    if (!revealed && teaserShown) {
+      if (btn.dataset.shopKey !== 'hidden') {
+        btn.dataset.shopKey = 'hidden';
+        btn.style.display = 'none';
       }
-      track.innerHTML = `<div class="upg-progress-fill${closeClass}" style="width:${progress}%"></div>`;
-    } else if (track) {
-      track.remove();
+      return;
     }
 
-    // "Need X more" label — add if missing, remove if affordable
-    let needEl = btn.querySelector('.upg-need');
-    if (!canAfford) {
-      if (!needEl) {
-        needEl = document.createElement('span');
-        btn.appendChild(needEl);
-      }
-      needEl.className = 'upg-need' + closeClass;
-      needEl.textContent = 'need ' + fmt(cost - Math.floor(state.pets)) + ' more';
-    } else if (needEl) {
-      needEl.remove();
+    if (!revealed) {
+      teaserShown = true;
+      const costStr = fmt(upgradeCost(u));
+      const key = 'teaser|' + costStr;
+      if (btn.dataset.shopKey === key) return;
+      btn.dataset.shopKey = key;
+      btn.style.display = '';
+      btn.disabled = true;
+      btn.classList.add('teaser');
+      btn.innerHTML = `
+        <div class="upg-top">
+          <span class="upg-name">???</span>
+          <span class="upg-cost">${costStr} &#x1F43E;</span>
+        </div>
+        <span class="upg-desc">keep earning pets to discover</span>`;
+      return;
     }
-  });
-}
 
-function refreshShopButtons() {
-  const btns = shopEl.querySelectorAll('.upg-btn');
-  UPGRADES.forEach((u, i) => {
-    const btn = btns[i];
-    if (!btn) return;
-    const wasDis = btn.disabled;
-    const nowDis = state.pets < upgradeCost(u);
-    btn.disabled = nowDis;
+    const owned     = state.owned[u.id] || 0;
+    const plan      = bulkPlan(u, buyMode);
+    const canAfford = state.pets >= plan.cost;
+    const progress  = canAfford ? 100 : Math.min(99, Math.floor((state.pets / plan.cost) * 100));
+    const closeCls  = (!canAfford && progress >= 60) ? ' close' : '';
+    const costStr   = fmt(plan.cost) + (plan.n > 1 ? ' <span class="upg-bulk">&times;' + plan.n + '</span>' : '');
+    const needStr   = canAfford ? '' : 'need ' + fmt(plan.cost - Math.floor(state.pets)) + ' more';
+
+    const key = ['n', buyMode, costStr, needStr, progress, owned, canAfford].join('|');
+    if (btn.dataset.shopKey === key) return; // nothing visible changed
+    btn.dataset.shopKey = key;
+
     // Glow when an upgrade first becomes affordable (one-shot)
-    if (wasDis && !nowDis && !btn.classList.contains('just-affordable')) {
+    if (btn.disabled && canAfford && !btn.classList.contains('just-affordable')) {
       btn.classList.add('just-affordable');
       setTimeout(() => btn.classList.remove('just-affordable'), 900);
     }
+
+    btn.style.display = '';
+    btn.classList.remove('teaser');
+    btn.disabled = !canAfford;
+    btn.innerHTML = `
+      <div class="upg-top">
+        <span class="upg-name">${u.name}</span>
+        <span class="upg-cost">${costStr} &#x1F43E;</span>
+      </div>
+      <span class="upg-desc${u.pps ? ' passive' : ''}">${u.desc}${owned > 0 ? ` &nbsp;<span class="upg-owned">[${owned} owned]</span>` : ''}</span>
+      ${!canAfford && progress > 0 ? `<div class="upg-progress-track"><div class="upg-progress-fill${closeCls}" style="width:${progress}%"></div></div>` : ''}
+      ${needStr ? `<span class="upg-need${closeCls}">${needStr}</span>` : ''}`;
   });
 }
 
@@ -1832,27 +2054,40 @@ function checkSynergies() {
   if (anyNew) buildSynergiesPanel();
 }
 
+// Locked synergies show as "???" with their upgrade requirements — a visible
+// chase list instead of an invisible surprise.
+function synReqText(syn) {
+  return 'requires ' + syn.requires.map((r) => {
+    const u = UPGRADES.find((x) => x.id === r.id);
+    return r.count + '&times; ' + (u ? u.name : r.id);
+  }).join(' + ');
+}
+
 function buildSynergiesPanel() {
   const panel = document.getElementById('synergy-panel');
   if (!panel) return;
   panel.innerHTML = '<div class="panel-title">&#x2728; Synergies</div>';
-  if (unlockedSynergies.size === 0) { panel.style.display = 'none'; return; }
   panel.style.display = '';
   SYNERGIES.forEach((syn) => {
-    if (!unlockedSynergies.has(syn.id)) return;
+    const has = unlockedSynergies.has(syn.id);
     const row = document.createElement('div');
-    row.className = 'syn-item';
-    row.innerHTML =
-      '<span class="syn-icon">' + syn.icon + '</span>' +
-      '<span class="syn-text"><span class="syn-name">' + syn.name + '</span>' +
-      '<span class="syn-effect">' + syn.effect + '</span></span>';
+    row.className = 'syn-item' + (has ? '' : ' locked');
+    row.innerHTML = has
+      ? '<span class="syn-icon">' + syn.icon + '</span>' +
+        '<span class="syn-text"><span class="syn-name">' + syn.name + '</span>' +
+        '<span class="syn-effect">' + syn.effect + '</span></span>'
+      : '<span class="syn-icon">&#x2753;</span>' +
+        '<span class="syn-text"><span class="syn-name">???</span>' +
+        '<span class="syn-effect">' + synReqText(syn) + '</span></span>';
     panel.appendChild(row);
   });
 }
 
 // ── Achievements ──────────────────────────────────────────────────────────────
 function buildAchievements() {
-  achPanel.innerHTML = '<div class="panel-title">&#x1F3C6; Achievements</div>';
+  // Each earned achievement grants +1% permanent income — shown in the title
+  const bonus = earned.size > 0 ? '<span class="ach-bonus">+' + earned.size + '% income</span>' : '';
+  achPanel.innerHTML = '<div class="panel-title">&#x1F3C6; Achievements' + bonus + '</div>';
   ACHIEVEMENTS.forEach((a) => {
     const isEarned = earned.has(a.id);
     const div = document.createElement('div');
@@ -1899,7 +2134,7 @@ const MOODS = [
 ];
 
 // ── Milestone celebration tracker ────────────────────────────────────────────
-const MILESTONES = [1000, 10000, 100000, 1000000, 10000000, 1000000000];
+const MILESTONES = [1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000, 10000000000, 100000000000];
 const _celebratedMilestones = new Set();
 
 function checkMilestones() {
@@ -1958,6 +2193,36 @@ function startGoldenEvent() {
   saveGame();
 }
 
+// ── Catchable golden puma sprite ──────────────────────────────────────────────
+// Spawns at a random spot; clicking it starts the 3× event. Ignoring it for
+// 12 s lets it slink away — the reward asks for a moment of attention.
+let _goldenSpriteTimeout = null;
+
+function spawnGoldenSprite() {
+  if (state.goldenActive || document.getElementById('golden-sprite')) return;
+  const b = document.createElement('button');
+  b.id = 'golden-sprite';
+  b.setAttribute('aria-label', 'A golden puma appeared! Catch it for 3× income');
+  b.textContent = '🐆';
+  b.style.left = (15 + Math.random() * 70) + 'vw';
+  b.style.top  = (18 + Math.random() * 60) + 'vh';
+  b.addEventListener('click', () => {
+    clearTimeout(_goldenSpriteTimeout);
+    b.remove();
+    state.goldensCaught += 1;
+    const rect = pumaWrapper.getBoundingClientRect();
+    spawnConfetti(rect.left + rect.width / 2, rect.top + rect.height / 2, 12);
+    startGoldenEvent();
+    checkAchievements(); // Gold Rush
+  });
+  document.body.appendChild(b);
+  showToast('✨ A wild golden puma appeared — catch it!');
+  _goldenSpriteTimeout = setTimeout(() => {
+    b.style.opacity = '0';
+    setTimeout(() => b.remove(), 400);
+  }, 12000);
+}
+
 function endGoldenEvent() {
   state.goldenActive = false;
   state.goldenEndsAt = 0;
@@ -1976,8 +2241,10 @@ function flashEl(el, cls) {
 
 function updateUI() {
   const mult   = incomeMultiplier();
-  const curPpc = Math.floor(state.ppc * mult);
-  const curPps = Math.floor(state.pps * mult);
+  // Show what a click/second actually yields: quantum bonus, synergies, and
+  // happiness included (previously per-second ignored synergies + happiness)
+  const curPpc = Math.floor((state.ppc + clickPpsBonus()) * mult);
+  const curPps = Math.floor(effectiveBasePps() * mult * happinessMultiplier());
   petCountEl.textContent = fmt(state.pets);
   ppcVal.textContent     = fmt(curPpc);
   ppsVal.textContent     = fmt(curPps);
@@ -1990,11 +2257,12 @@ function updateUI() {
   _lastPps = curPps;
 
   // Live pet count in browser tab — dirty-checked to avoid needless string thrash
-  const newTitle = fmt(state.pets) + ' 🐆 PumaClicker';
+  const newTitle = fmt(state.pets) + ' · PumaClicker';
   if (newTitle !== _lastTitle) { document.title = newTitle; _lastTitle = newTitle; }
 
-  // Multiplier badge
-  if (state.transcendences > 0) {
+  // Multiplier badge — shown once any bonus is active (transcends,
+  // achievement %, or a golden event)
+  if (mult > 1) {
     multBadgeEl.textContent  = '✨ ' + mult.toFixed(2) + '× income';
     multBadgeEl.style.display = '';
   } else {
@@ -2006,7 +2274,7 @@ function updateUI() {
   if (state.totalPets >= threshold) {
     transcendZoneEl.style.display  = '';
     transcendProgRow.style.display  = 'none';
-    const nextMult = Math.pow(1.5, state.transcendences + 1).toFixed(2);
+    const nextMult = Math.pow(TRANSCEND_REWARD, state.transcendences + 1).toFixed(2);
     transcendDescEl.textContent = 'reset everything · gain ' + nextMult + '× eternal income';
   } else {
     transcendZoneEl.style.display = 'none';
@@ -2064,7 +2332,7 @@ function updateUI() {
     if (elPeak)   elPeak.textContent   = fmt(Math.floor(state.peakPps)) + ' /s';
   }
 
-  refreshShopButtons();
+  updateShopInPlace();
   maybeShowHapHint();
 }
 
@@ -2076,25 +2344,25 @@ function tick(now) {
   const dt = Math.min((now - lastTick) / 1000, 5);
   lastTick = now;
 
-  // Feature A — Golden event lifecycle
+  // Feature A — Golden event lifecycle. The event no longer auto-activates:
+  // a catchable golden puma spawns and must be clicked within its window.
   if (state.goldenActive && now >= state.goldenEndsAt) endGoldenEvent();
-  if (!state.goldenActive && now >= _nextGoldenAt)     startGoldenEvent();
+  if (!state.goldenActive && now >= _nextGoldenAt) {
+    spawnGoldenSprite();
+    _nextGoldenAt = now + (180 + Math.random() * 300) * 1000;
+  }
 
   // Feature B — Accumulate play time
   state.timePlayed += dt;
 
   if (state.pps > 0) {
-    // Feature C — machine_whisperer: +3 pps per Petting Machine owned
-    const machinePpsBonus = unlockedSynergies.has('machine_whisperer') ? (state.owned.machine || 0) * 3 : 0;
-    // Feature C — sanctuary_dimension: all passive income +25%
-    const ppsBoost = unlockedSynergies.has('sanctuary_dimension') ? 1.25 : 1.0;
-    const effectivePps = (state.pps + machinePpsBonus) * ppsBoost;
-    const gain = effectivePps * incomeMultiplier() * happinessMultiplier() * dt;
+    // Synergy effects (machine_whisperer, sanctuary_dimension) via shared helper
+    const effPpsCur = effectiveBasePps() * incomeMultiplier() * happinessMultiplier();
+    const gain = effPpsCur * dt;
     state.pets      += gain;
     state.totalPets += gain;
 
     // Feature B — Track peak effective PPS
-    const effPpsCur = effectivePps * incomeMultiplier() * happinessMultiplier();
     if (effPpsCur > state.peakPps) state.peakPps = effPpsCur;
   }
 
@@ -2163,10 +2431,18 @@ const OB_HAP_KEY     = 'pc-ob-hap-v1';
 const SAVE_KEY       = 'pc-save-v1';
 
 // ── Save / Load ───────────────────────────────────────────────────────────────
+// Set when wiping or importing a save: blocks the autosave timer and the
+// pagehide/visibilitychange handlers from resurrecting old state during reload.
+let _suppressSave = false;
+
 function saveGame() {
+  if (_suppressSave) return;
   try {
     localStorage.setItem(SAVE_KEY, JSON.stringify({
       state,
+      // state.goldenEndsAt is performance.now()-relative — meaningless in a
+      // future page load. Persist the remaining duration instead (see loadGame).
+      goldenRemainingMs: state.goldenActive ? Math.max(0, state.goldenEndsAt - performance.now()) : 0,
       earned:     Array.from(earned),
       celebrated: Array.from(_celebratedMilestones),
       synergies:  Array.from(unlockedSynergies),
@@ -2190,14 +2466,17 @@ function loadGame() {
     const s = save.state;
     if (typeof s.pets           === 'number') state.pets           = s.pets;
     if (typeof s.totalPets      === 'number') state.totalPets      = s.totalPets;
-    if (typeof s.ppc            === 'number') state.ppc            = s.ppc;
-    if (typeof s.pps            === 'number') state.pps            = s.pps;
     if (typeof s.happiness      === 'number') state.happiness      = s.happiness;
     if (typeof s.transcendences === 'number') state.transcendences = s.transcendences;
     if (s.owned && typeof s.owned === 'object') state.owned        = s.owned;
-    // Feature A
+    // ppc/pps are deliberately NOT read from the save — they're derived from
+    // owned counts, so balance changes apply retroactively to old saves.
+    recomputeIncome();
+    // Feature A — goldenEndsAt is deliberately NOT restored (it's relative to
+    // the previous page's performance.now() clock); rebuilt below from
+    // save.goldenRemainingMs.
     if (typeof s.goldenActive   === 'boolean') state.goldenActive  = s.goldenActive;
-    if (typeof s.goldenEndsAt   === 'number')  state.goldenEndsAt  = s.goldenEndsAt;
+    if (typeof s.goldensCaught  === 'number')  state.goldensCaught = s.goldensCaught;
     // Feature B
     if (typeof s.totalClicks    === 'number') state.totalClicks    = s.totalClicks;
     if (typeof s.timePlayed     === 'number') state.timePlayed     = s.timePlayed;
@@ -2218,22 +2497,23 @@ function loadGame() {
       const elapsed = Math.min((Date.now() - save.savedAt) / 1000, 4 * 3600);
       if (elapsed >= 60) {
         offlineSeconds = elapsed;
-        offlinePets    = state.pps * incomeMultiplier() * 1.0 * elapsed; // h=50 → mult=1.0
+        // Transcendence + achievement multipliers only — a golden event active
+        // at save time must not 3× the whole away period (it only lasts 30 s).
+        const baseMult = (state.transcendences > 0 ? Math.pow(TRANSCEND_REWARD, state.transcendences) : 1)
+                       * (1 + 0.01 * earned.size);
+        offlinePets    = state.pps * baseMult * 1.0 * elapsed; // h=50 → mult=1.0
         state.pets      += offlinePets;
         state.totalPets += offlinePets;
       }
     }
 
-    // Feature A — If golden event was active at save time, check if it's still valid
+    // Feature A — resume a golden event only if its 30 s window hasn't elapsed
     if (state.goldenActive) {
-      // Convert savedAt-relative endAt to performance.now()-relative
-      const savedAt    = save.savedAt || Date.now();
-      const elapsed    = Date.now() - savedAt;
-      const remaining  = state.goldenEndsAt - elapsed; // approximate
+      const closedFor = Date.now() - (save.savedAt || Date.now());
+      const remaining = (typeof save.goldenRemainingMs === 'number' ? save.goldenRemainingMs : 0) - closedFor;
       if (remaining > 0) {
         state.goldenEndsAt = performance.now() + remaining;
         pumaWrapper.classList.add('golden-puma');
-        // Banner will appear on first tick via showGoldenBanner() path, or show now:
         showGoldenBanner();
       } else {
         // Event already expired while tab was closed
@@ -2255,8 +2535,10 @@ function loadGame() {
 
   btn.addEventListener('click', () => {
     if (confirmTimeout) {
-      // Second click within 3 s — confirmed, wipe save and reload
+      // Second click within 3 s — confirmed, wipe save and reload.
+      // Suppress autosave or the pagehide handler would resurrect the save.
       clearTimeout(confirmTimeout);
+      _suppressSave = true;
       localStorage.removeItem(SAVE_KEY);
       location.reload();
     } else {
@@ -2271,6 +2553,45 @@ function loadGame() {
     }
   });
 }
+
+// ── Save export / import ──────────────────────────────────────────────────────
+// A save code is 'PUMA1.' + base64(save JSON). Guards against losing progress
+// to a cleared localStorage, and moves saves between browsers/devices.
+const SAVE_CODE_PREFIX = 'PUMA1.';
+
+function exportSave() {
+  saveGame(); // snapshot the very latest state
+  const raw = localStorage.getItem(SAVE_KEY);
+  if (!raw) { showToast('Nothing to export yet — pet the puma first! 🐾'); return; }
+  const code = SAVE_CODE_PREFIX + btoa(unescape(encodeURIComponent(raw)));
+  const fallback = () => window.prompt('Copy your save code:', code);
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(code)
+      .then(() => showToast('💾 Save code copied to clipboard'), fallback);
+  } else {
+    fallback();
+  }
+}
+
+function importSave() {
+  const code = window.prompt('Paste your save code:');
+  if (!code) return;
+  try {
+    const trimmed = code.trim();
+    const b64  = trimmed.startsWith(SAVE_CODE_PREFIX) ? trimmed.slice(SAVE_CODE_PREFIX.length) : trimmed;
+    const json = decodeURIComponent(escape(atob(b64)));
+    const parsed = JSON.parse(json);
+    if (!parsed || typeof parsed.state !== 'object') throw new Error('bad save');
+    _suppressSave = true; // don't let autosave clobber the import during reload
+    localStorage.setItem(SAVE_KEY, json);
+    location.reload();
+  } catch (e) {
+    showToast('That save code doesn\'t look right 🐾');
+  }
+}
+
+document.getElementById('export-btn').addEventListener('click', exportSave);
+document.getElementById('import-btn').addEventListener('click', importSave);
 
 // Feature B — Stats panel toggle
 {
@@ -2367,6 +2688,11 @@ if (_saveResult.loaded && state.totalPets > 0) {
   }
 }
 setInterval(saveGame, 30000); // auto-save every 30 s (catches passive income between interactions)
+// Save on tab hide/close too — the 30 s timer alone can drop recent progress
+window.addEventListener('pagehide', saveGame);
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') saveGame();
+});
 requestAnimationFrame(tick);
 
 // ── Console API (Feature D) ────────────────────────────────────────────────────
@@ -2422,10 +2748,10 @@ window.puma = Object.freeze({
       if (!state.owned[u.id]) {
         const cost = upgradeCost(u);
         state.pets = Math.max(state.pets, cost);
-        state.owned[u.id] = (state.owned[u.id] || 0) + 1;
-        u.fn();
+        state.owned[u.id] = 1;
       }
     });
+    recomputeIncome();
     buildShop();
     checkSynergies();
     updateUI();

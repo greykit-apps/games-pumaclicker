@@ -2,7 +2,7 @@
 
 A browser-based idle clicker game. Click the puma. Earn pets. Build an empire of affection.
 
-![Fresh start](screenshots/gameplay-fresh.png)
+![Fresh start — three upgrades revealed, the rest still ???](screenshots/gameplay-fresh.png)
 
 ## Play
 
@@ -14,15 +14,15 @@ Open `PumaClicker.html` in any modern browser. No server, no build step, no depe
 
 ### Happiness
 
-Your puma has feelings. Its happiness naturally drifts toward 50% over time, and its mood changes across five states: Grumpy, Calm, Content, Happy, and Ecstatic — each with its own ASCII art expression. Happiness directly scales your **passive income** (0.5x at 0%, 1.0x at 50%, 1.5x at 100%). Click income is always full value. The live multiplier is shown next to the puma's mood.
+Your puma has feelings. Its happiness naturally drifts toward 50% over time, and its mood changes across five states: Grumpy, Calm, Content, Happy, and Ecstatic — each with its own ASCII art expression. Gentle petting raises happiness, but over-petting (sustained fast clicking) annoys the puma and drains it. Happiness directly scales your **passive income** (0.5x at 0%, 1.0x at 50%, 1.5x at 100%). Click income is always full value. The live multiplier is shown next to the puma's mood.
 
 ### Shop
 
-14 upgrades ranging from a Treat Bag (10 pets, +1 pet/click) to Puma God Mode (10 billion pets, +10M pets/sec). Each purchase increases the cost of the next, so timing matters. Upgrades boost either click power or passive income — progress bars show how close you are to affording each one.
+14 upgrades ranging from a Treat Bag (10 pets, +1 pet/click) to Puma God Mode (15 billion pets, +12M pets/sec). Each purchase increases the cost of the next, and a ×1 / ×10 / Max toggle lets you buy in bulk. Quantum Purr keeps clicking relevant late-game: each copy adds 2% of your passive income to every click. Upgrades you haven't come close to affording yet show as "???" — keep earning to discover them. Progress bars show how close you are to affording each one.
 
 ### Synergies
 
-Owning the right combination of upgrades unlocks synergy bonuses:
+Owning the right combination of upgrades unlocks synergy bonuses. Locked synergies show as "???" with their requirements listed, so you always have a combo to chase:
 
 - **Relaxed Grooming** — 3x Grooming Brush + 2x Catnip Stash: happiness decays 50% slower
 - **Machine-Assisted Affection** — Petting Machine + Puma Whisperer: +3 pets/sec per Petting Machine owned
@@ -30,19 +30,19 @@ Owning the right combination of upgrades unlocks synergy bonuses:
 
 ### Golden Puma Events
 
-Every few minutes a Golden Puma event triggers, granting **3x income** for 30 seconds. A countdown banner appears at the top of the screen — make the most of it.
+Every few minutes a golden puma appears somewhere on screen. Catch it within 12 seconds to trigger **3x income** for 30 seconds — ignore it and it slinks away. A countdown banner tracks the boost.
 
-![Golden puma event with 3x income and transcendence ready](screenshots/gameplay-golden.png)
+![Golden Puma event — 3x income for 30 seconds](screenshots/gameplay-golden.png)
 
 ### Transcendence
 
-Once you accumulate enough lifetime pets (starting at 1M), a Transcend button appears. Transcending resets your pets, upgrades, and happiness but grants a permanent **1.5x income multiplier** that stacks exponentially with each ascension. Achievements and synergies are retained.
+Once you accumulate enough lifetime pets (starting at 1M, ×8 per ascension), a Transcend button appears. Transcending resets your pets, upgrades, and happiness but grants a permanent **2.5x income multiplier** that stacks exponentially with each ascension. Achievements and synergies are retained.
 
 ### Achievements
 
-18 achievements tracking milestones across total pets earned, upgrades purchased, passive income reached, happiness maxed, and transcendence count.
+24 achievements tracking milestones across total pets earned, upgrades purchased, passive income reached, happiness maxed (and zeroed), golden pumas caught, and transcendence count. Each earned achievement grants a permanent **+1% income** — the trophy case pays rent.
 
-![Mid-game with synergies, achievements, and transcendence](screenshots/gameplay-midgame.png)
+![Mid-game — synergies, achievement income bonus, and transcendence ready](screenshots/gameplay-midgame.png)
 
 ### Statistics
 
@@ -51,8 +51,10 @@ A collapsible panel tracks Total Clicks, Time Played, and Peak PPS (pets per sec
 ## Other Features
 
 - **Offline income** — passive pets accumulate while the tab is closed (up to 4 hours)
+- **Save export/import** — copy a save code to move progress between browsers or back it up
+- **Installable** — PWA manifest lets you add the game to a phone home screen
 - **Click particles** — floating emotes and damage numbers on every pet
-- **Milestone celebrations** — confetti bursts at 1K, 10K, 100K, 1M, 10M, and 1B total pets
+- **Milestone celebrations** — confetti bursts at every power of ten from 1K to 100B total pets
 - **Puma expressions** — the ASCII art puma blinks, changes eyes and mouth based on mood
 - **How to Play tooltip** — onboarding overlay for new players
 
