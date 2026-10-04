@@ -125,9 +125,21 @@ h1 {
   color: var(--text-muted);
   font-size: 0.82em;
   font-weight: 600;
-  margin-bottom: 18px;
+  margin-bottom: 4px;
   letter-spacing: 0.04em;
 }
+
+/* greykit.games canon §1 — the credit, under the subtitle */
+#page-header .gk-credit {
+  font-family: var(--font-body);
+  color: var(--text-dim);
+  font-size: 0.7em;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  margin-bottom: 18px;
+}
+#page-header .gk-credit a { color: var(--amber); text-decoration: none; border-bottom: 1px solid color-mix(in srgb, var(--amber) 40%, transparent); }
+#page-header .gk-credit a:hover { border-bottom-color: var(--amber); }
 
 #game {
   display: grid;
@@ -961,7 +973,8 @@ h1 {
 
   /* Scale down headline and counter so they don't dominate on small screens */
   h1           { font-size: 2.1em; margin-bottom: 2px; }
-  .subtitle    { font-size: 0.74em; margin-bottom: 12px; }
+  .subtitle    { font-size: 0.74em; margin-bottom: 4px; }
+  #page-header .gk-credit { margin-bottom: 12px; }
   #pet-count   { font-size: 3.8em; }
 
   #game {
@@ -1009,6 +1022,7 @@ h1 {
 
   h1       { font-size: 1.6em; margin-bottom: 1px; }
   .subtitle { display: none; }
+  #page-header .gk-credit { display: none; }
 
   #game {
     grid-template-columns: minmax(160px, 220px) minmax(200px, 300px) minmax(160px, 220px);
@@ -1321,6 +1335,7 @@ h1            { animation: pageEnter      0.55s var(--ease-out-quart)  0ms  both
 <header id="page-header">
   <h1>PumaClicker</h1>
   <p class="subtitle">click the puma. pet the puma. be the puma.</p>
+  <p class="gk-credit">Built by <a href="https://greykit.com/" target="_blank" rel="noopener">greykit.com</a></p>
   <button id="about-btn" onclick="openAbout()" title="About" aria-label="About PumaClicker">?</button>
 </header>
 
@@ -1433,7 +1448,7 @@ h1            { animation: pageEnter      0.55s var(--ease-out-quart)  0ms  both
 
       <p>PumaClicker is the result of my very first exploration into AI-assisted development with <em>Claude Code</em>. It was meant to be a throw-away project just to practice with, but then I found myself playing it, and now I&rsquo;m emotionally invested.</p>
 
-      <p>Built by <a href="https://www.greykit.com" target="_blank" rel="noopener">greykit.com</a></p>
+      <p class="gk-credit">Built by <a href="https://greykit.com/" target="_blank" rel="noopener">greykit.com</a></p>
     </div>
   </div>
 </div>
