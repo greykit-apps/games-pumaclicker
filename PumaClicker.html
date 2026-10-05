@@ -1531,8 +1531,14 @@ function clickPpsBonus() {
   return q ? q * 0.02 * effectiveBasePps() : 0;
 }
 
+// localStorage can throw (private mode, blocked site data, a full quota); these
+// treat any failure as "nothing stored" so the game still runs without a save.
+function storeGet(k)    { try { return localStorage.getItem(k); } catch (e) { return null; } }
+function storeSet(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* no storage */ } }
+function storeDel(k)    { try { localStorage.removeItem(k); } catch (e) { /* no storage */ } }
+
 // ── Buy amount (×1 / ×10 / Max) ───────────────────────────────────────────────
-let buyMode = localStorage.getItem('pc-buymode');
+let buyMode = storeGet('pc-buymode');
 if (!['1', '10', 'max'].includes(buyMode)) buyMode = '1';
 
 // How many copies the current buy mode purchases, and their total cost.
@@ -2539,7 +2545,7 @@ function loadGame() {
       // Suppress autosave or the pagehide handler would resurrect the save.
       clearTimeout(confirmTimeout);
       _suppressSave = true;
-      localStorage.removeItem(SAVE_KEY);
+      storeDel(SAVE_KEY);
       location.reload();
     } else {
       // First click — arm confirmation
@@ -2561,7 +2567,7 @@ const SAVE_CODE_PREFIX = 'PUMA1.';
 
 function exportSave() {
   saveGame(); // snapshot the very latest state
-  const raw = localStorage.getItem(SAVE_KEY);
+  const raw = storeGet(SAVE_KEY);
   if (!raw) { showToast('Nothing to export yet — pet the puma first! 🐾'); return; }
   const code = SAVE_CODE_PREFIX + btoa(unescape(encodeURIComponent(raw)));
   const fallback = () => window.prompt('Copy your save code:', code);
@@ -2607,13 +2613,13 @@ document.getElementById('import-btn').addEventListener('click', importSave);
 }
 
 // Happiness hint — shown once when happiness first drops below 35%
-let _hapHintPending = !localStorage.getItem(OB_HAP_KEY);
+let _hapHintPending = !storeGet(OB_HAP_KEY);
 
 function maybeShowHapHint() {
   if (!_hapHintPending) return;
   if (state.happiness > 35) return;
   _hapHintPending = false;
-  localStorage.setItem(OB_HAP_KEY, '1');
+  storeSet(OB_HAP_KEY, '1');
 
   const hapBox = document.getElementById('happiness-box');
   const hint   = document.createElement('div');
@@ -2630,7 +2636,7 @@ function maybeShowHapHint() {
 }
 
 // Welcome card — shown once to first-time visitors only
-if (!localStorage.getItem(OB_WELCOME_KEY)) {
+if (!storeGet(OB_WELCOME_KEY)) {
   const card = document.createElement('div');
   card.id = 'onboard-card';
   card.setAttribute('role', 'note');
@@ -2659,7 +2665,7 @@ if (!localStorage.getItem(OB_WELCOME_KEY)) {
     if (!card.parentNode) return;
     card.classList.add('dismissing');
     card.addEventListener('animationend', () => card.remove(), { once: true });
-    localStorage.setItem(OB_WELCOME_KEY, '1');
+    storeSet(OB_WELCOME_KEY, '1');
   }
 
   card.querySelector('.ob-close').addEventListener('click', dismissWelcome);
